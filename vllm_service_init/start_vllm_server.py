@@ -135,9 +135,9 @@ def hello():
     for idx, item in enumerate(data):
         question = item.get('question', '')
         golden_answer = item.get('answer', '')
-        image_payload = bytes(item.get('image'), encoding='utf8')
+        image_payload = item.get('image','')
 
-        if question and golden_answer:
+        if question and golden_answer and image_payload:
             image = load_image_from_payload(image_payload)
             if image is not None:
                 messages = [
@@ -158,6 +158,7 @@ def hello():
                 )
                 prepared_inputs.append({"prompt": prompt, "multi_modal_data": {"image": image}})
             else:
+                print(f'[server] Lack of image for question')
                 chat = [
                     {"role": "system", "content": SOLVER_SYSTEM_PROMPT},
                     {"role": "user", "content": f"{ANSWER_INSTRUCTION}\nQuestion: {question}"},
@@ -216,12 +217,21 @@ def hello():
         max_count = max(answer_counts.values()) if answer_counts else 0
         majority_ans = max(answer_counts, key=answer_counts.get) if answer_counts else ''
         score = max_count / len(results) if results else 0.0
+        golden_answer_match = re.search(r'[A-Z]', golden_answer)
+        if golden_answer_match:
+            golden_answer_extract = golden_answer_match.group(0)
+        else:
+            golden_answer_extract = ''
+            golden_answer = ''
+
         if golden_answer == '':
             score = -1
-        elif grade_answer(majority_ans, golden_answer):
+        elif grade_answer(majority_ans, golden_answer_extract):
             score = min(score, 1-score)
-        else:
+        elif majority_ans != 'None':
             score = 0.5 * score
+        else:
+            score = 0.0
 
         return {
             'question': question,

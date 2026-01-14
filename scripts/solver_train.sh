@@ -8,16 +8,16 @@ echo "start train solver $experiment_name $solver_model_path $questioner_model_p
 
 export VLLM_DISABLE_COMPILE_CACHE=1
 echo 'start generate question'
-python question_generate/question_generator.py \
+CUDA_VISIBLE_DEVICES=0,1,2,3 python question_generate/question_generator.py \
     --model_path $questioner_model_path \
     --data_source $data_source \
     --input_file /root/autodl-tmp/data/OpenVLThinker \
-    --output_file_path results/${experiment_name}/questions.json 
-    # --filter_json filter.json
+    --output_file_path results/${experiment_name}/questions.json \
+    --filter_json filter.json
 
 sleep 10
 echo 'start evaluate generated question'
-python question_evaluate/question_evaluator.py \
+CUDA_VISIBLE_DEVICES=0,1,2,3 python question_evaluate/question_evaluator.py \
     --model_path $solver_model_path \
     --data_source $data_source \
     --input_file /root/autodl-tmp/data/OpenVLThinker \
@@ -30,7 +30,7 @@ python examples/data_preprocess/general_solver.py \
     --local_dataset_path /root/autodl-tmp/data/OpenVLThinker \
     --local_save_dir results/${experiment_name}/
 sleep 1
-python3 -m verl.trainer.main_ppo \
+CUDA_VISIBLE_DEVICES=0,1,2,3 python3 -m verl.trainer.main_ppo \
     algorithm.adv_estimator=grpo \
     data.train_files=results/${experiment_name}/train.parquet \
     data.val_files=data/OpenVLThinker/test.parquet \

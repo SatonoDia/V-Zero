@@ -95,7 +95,7 @@ def question_evaluate(data_source, dataset, question_file, llm, sampling_params,
     with open(question_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
-    system_prompt = """You are an expert competition-math problem solver."""
+    system_prompt = """You are an expert question solver."""
 
     answer_prompt = r"""
         Solve the multiple-choice question based on the provided image. Let's think step by step.

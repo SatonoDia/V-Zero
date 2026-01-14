@@ -82,9 +82,10 @@ if __name__ == "__main__":
     questioner_instruction = """<image>\nCreate a multiple-choice geometry question based on the image. Let's think step by step.
         First, you must fully perceive the image, extracting any valuable visual information from it and generate a detailed visual description of the image.
 
-        Then, write a multiple-choice question that includes necessary conditions.
+        Then, write a multiple-choice question that includes necessary conditions. Use phrases like "Given that..." or "If..." to state condition shown in visual description if it's a geometry question. 
+        The question must require analysis or reasoning.
         The question must include four options, one of which is the correct answer. Provide the correct answer to the generated question. It must be one of A/B/C/D, and MUST BE enclosed within <answer> </answer> tags.
-        Any question type other than multiple-choice is FORBIDDEN. 
+        Any question type other than multiple-choice is STRICTLY FORBIDDEN. 
 
         Your MUST response in this format:
 

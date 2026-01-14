@@ -80,14 +80,16 @@ def split_output_text(output_text):
 def process_geo3k_dataset(dataset, llm, sampling_params, tokenizer, indices=None):
     valid_data = []
     inputs = []
-    system_message = "You are an intelligent Question Generator. Your task is to create a question based on the given image."
-    user_prompt = '''Create a multiple-choice geometry question based on the image. Let's think step by step.
+    system_message = "You are a professional question designer."
+    user_prompt = '''Create a multiple-choice question based on the image. Let's think step by step.
             First, you must fully perceive the image, extracting any valuable visual information from it and generate a detailed visual description of the image.
 
-            Then, write a multiple-choice question that includes necessary conditions. Make sure the question provides sufficient information to be answered. 
-            Use phrases like "Given that..." or "If..." to state condition shown in visual description if it's a geometry question.
-            The question must include four options, one of which is the correct answer. Provide the correct answer to the generated question. It must be one of A/B/C/D, and MUST BE enclosed within <answer> </answer> tags.
-            Any question type other than multiple-choice is FORBIDDEN. 
+            Then, write a multiple-choice question that includes necessary conditions. 
+            Make sure the question provides sufficient information to be answered. Use phrases like "If..." or "Given that..." to state condition shown in visual description if it's a geometry question.
+            The question must require analysis or reasoning.
+            The question must include four options, one of which is the correct answer. 
+            Provide the correct answer to the generated question. It must be one of A/B/C/D, and MUST BE enclosed within <answer> </answer> tags.
+            Any question type other than multiple-choice is STRICTLY FORBIDDEN!
 
             Your MUST response in this format:
 
@@ -100,7 +102,7 @@ def process_geo3k_dataset(dataset, llm, sampling_params, tokenizer, indices=None
             </question>
     
             <answer>
-            [Correct answer A/B/C/D] 
+            [Correct answer option A/B/C/D] 
             </answer>
             
             DO NOT output anything else—no explanations, no extra markup.
