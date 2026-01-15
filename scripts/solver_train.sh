@@ -12,8 +12,8 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python question_generate/question_generator.py \
     --model_path $questioner_model_path \
     --data_source $data_source \
     --input_file /root/autodl-tmp/data/OpenVLThinker \
-    --output_file_path results/${experiment_name}/questions.json \
-    --filter_json filter.json
+    --output_file_path results/${experiment_name}/questions.json 
+    # --filter_json filter.json
 
 sleep 10
 echo 'start evaluate generated question'

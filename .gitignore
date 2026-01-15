@@ -134,3 +134,4 @@ solver.pid
 tests/
 data/
 *.json
+.vscode

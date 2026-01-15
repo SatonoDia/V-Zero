@@ -88,7 +88,7 @@ def process_geo3k_dataset(dataset, llm, sampling_params, tokenizer, indices=None
             Make sure the question provides sufficient information to be answered. Use phrases like "If..." or "Given that..." to state condition shown in visual description if it's a geometry question.
             The question must require analysis or reasoning.
             The question must include four options, one of which is the correct answer. 
-            Provide the correct answer to the generated question. It must be one of A/B/C/D, and MUST BE enclosed within <answer> </answer> tags.
+            Provide the correct answer to the generated question without thinking. It must be one of A/B/C/D, and MUST BE enclosed within <answer> </answer> tags.
             Any question type other than multiple-choice is STRICTLY FORBIDDEN!
 
             Your MUST response in this format:
@@ -171,182 +171,6 @@ def process_geo3k_dataset(dataset, llm, sampling_params, tokenizer, indices=None
         
     return data_res
 
-def process_clevr_dataset(dataset, llm, sampling_params, tokenizer):
-    valid_data = []
-    inputs = []
-    system_message = "You are an expert competition-math problem setter."
-    user_prompt = '''Create an multiple-choice question based on the image. Let's think step by step.
-            First, you must fully perceive the image, extracting any valuable visual information from it (including the sizes and colors of items and various spartial relationships), 
-            and generate a detailed visual description of the image.
-
-            Then, write a multiple-choice question including attribute identification, counting, comparison, spatial relationships, and logical operations based on the image.
-            The question must include four options, one of which is the correct answer. Any question type other than multiple-choice is FORBIDDEN. 
-
-            Your MUST response in this format:
-
-            <description>
-            [Visual description you extract from the image]
-            </description>
-
-            <question>
-            [Write a complete multiple-choice question that states all necessary conditions clearly, followed by exactly 4 answer options A B C D]
-            </question>
-    
-            <answer>
-            [A/B/C/D]
-            </answer>
-            DO NOT output anything else—no explanations, no extra markup.
-            '''
-    
-    # Prepare inputs for batch processing
-    for idx, item in enumerate(dataset):
-        try:
-            image = item['image']  # PIL.Image from dataset
-            image = load_image_from_dataset_item(image)
-            # Use apply_chat_template with image + text
-            messages = [
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": [{"type": "image"}, {"type": "text", "text": user_prompt}]}
-            ]
-
-            prompt = tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
-                add_special_tokens=True
-            )
-
-            inputs.append({
-                "prompt": prompt,
-                "multi_modal_data": {"image": image}
-            })
-
-            valid_data.append({
-                "id": item.get("image_id", idx),  # fallback to index if no id
-                "img_data_source": args.data_source,
-                "image_idx": idx
-            })
-
-        except Exception as e:
-            print(f"Error processing dataset item {idx}: {e}")
-            continue
-
-    if not inputs:
-        print("No valid images found to process!")
-        return []
-
-    print(f"Generating questions for {len(inputs)} images...")
-    outputs = llm.generate(inputs, sampling_params)
-    data_res = []
-    
-    for idx, item in tqdm(enumerate(valid_data), total=len(valid_data), desc="Storing questions"):
-        try:
-            output_text = outputs[idx].outputs[0].text.strip()
-            question, answer, description = split_output_text(output_text)
-          
-            result_item = {
-                "id": item["id"],
-                "img_data_source": item["img_data_source"],
-                "image_idx": item["image_idx"],
-                "description": description,
-                "question": question,         # Add question attribute
-                "answer": answer
-            }
-            
-            data_res.append(result_item)
-                
-        except Exception as e:
-            print(f"Error processing output for image {item['image_name']}: {str(e)}")
-            continue
-        
-    return data_res
-
-def process_chart_dataset(dataset, llm, sampling_params, tokenizer):
-    valid_data = []
-    inputs = []
-    system_message = "You are an expert competition-math problem setter."
-    user_prompt = """<image>\nCreate a multiple-choice question based on the image. Let's think step by step.
-        First, you must fully perceive the image: type (bar/line/pie), axes, labels, legends, values, trends.
-
-        Then, write a multiple-choice question testing chart understanding (value reading, comparison, trend inference).
-        The question must include four options, one of which is the correct answer. Any question type other than multiple-choice is FORBIDDEN. 
-
-        Your MUST response in this format:
-
-        <description>
-        [Visual description you extract from the image]
-        </description>
-
-        <question>
-        [Write a multiple-choice question, followed by exactly 4 answer options A B C D]
-        </question>
-
-        <answer>
-        [A/B/C/D]
-        </answer>
-        DO NOT output anything else—no explanations, no extra markup.
-    """
-    
-    # Prepare inputs for batch processing
-    for idx, item in enumerate(dataset):
-        try:
-            image = item['image']  # PIL.Image from dataset
-            image = load_image_from_dataset_item(image)
-            # Use apply_chat_template with image + text
-            messages = [
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": [{"type": "image"}, {"type": "text", "text": user_prompt}]}
-            ]
-
-            prompt = tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
-                add_special_tokens=True
-            )
-
-            inputs.append({
-                "prompt": prompt,
-                "multi_modal_data": {"image": image}
-            })
-
-            valid_data.append({
-                "img_data_source": args.data_source,
-                "image_idx": idx
-            })
-
-        except Exception as e:
-            print(f"Error processing dataset item {idx}: {e}")
-            continue
-
-    if not inputs:
-        print("No valid images found to process!")
-        return []
-
-    print(f"Generating questions for {len(inputs)} images...")
-    outputs = llm.generate(inputs, sampling_params)
-    data_res = []
-    
-    for idx, item in tqdm(enumerate(valid_data), total=len(valid_data), desc="Storing questions"):
-        try:
-            output_text = outputs[idx].outputs[0].text.strip()
-            question, answer, description = split_output_text(output_text)
-          
-            result_item = {
-                "img_data_source": item["img_data_source"],
-                "image_idx": item["image_idx"],
-                "description": description,
-                "question": question,         # Add question attribute
-                "answer": answer
-            }
-            
-            data_res.append(result_item)
-                
-        except Exception as e:
-            print(f"Error processing output for image {item['image_name']}: {str(e)}")
-            continue
-        
-    return data_res
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -396,12 +220,8 @@ if __name__ == "__main__":
     # Process images and generate questions
     data_res = []
     try:
-        if args.data_source == 'dddraxxx/spatial_clevr_numbered_2000':
-            data_res = process_clevr_dataset(train_dataset, llm, sampling_params, tokenizer)
-        elif args.data_source == 'HuggingFaceM4/ChartQA':
-            data_res = process_chart_dataset(train_dataset.select(range(3000)), llm, sampling_params, tokenizer)
-        else:
-            data_res = process_geo3k_dataset(train_dataset, llm, sampling_params, tokenizer, selected_indices)
+
+        data_res = process_geo3k_dataset(train_dataset, llm, sampling_params, tokenizer, selected_indices)
 
         if not data_res:
             print("No questions were generated!")
